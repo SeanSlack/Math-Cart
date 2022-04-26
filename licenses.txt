@@ -1,0 +1,19 @@
+jquery-2.1.3.min.js: jQuery v2.1.3 | (c) 2005, 2014 jQuery Foundation, Inc. | jquery.org/license
+
+introtoapps.min.js: Henry Larkin (c) 2017
+
+boboshin_-_Funk_Tele_Am7_110_bpm.mp3 by Vladimir Boboshin (c) copyright 2012 Licensed under a Creative Commons Attribution (3.0) license. http://dig.ccmixter.org/files/boboshin/39355
+
+tnt.png By Gamegfx, purchased under Creative Commons from shutter stock. https://thumb7.shutterstock.com/display_pic_with_logo/1539071/178667771/stock-vector-mine-assets-178667771.jpg
+
+coal.png By Gamegfx, purchased under Creative Commons. https://thumb1.shutterstock.com/display_pic_with_logo/1539071/158027153/stock-vector--mine-cart-with-coal-158027153.jpg
+
+minecart.png (cart only) By Gamegfx, purchased under Creative Commons. https://thumb1.shutterstock.com/display_pic_with_logo/1539071/158027153/stock-vector--mine-cart-with-coal-158027153.jpg
+
+Mine cart.png (player) by Sean Slack in adobe illustrator.
+
+181602__coby12388__enerjump.wav, by coby12388, under Creative Commons licence from https://www.freesound.org/people/coby12388/sounds/181602/
+
+underground.png By Lilu330, purchased under Creative Commons from shutter stock. https://thumb1.shutterstock.com/display_pic_with_logo/1835936/241110436/stock-vector-seamless-cartoon-cave-landscape-unending-background-with-layers-for-parallax-effect-241110436.jpg
+
+ledge.png By Lilu330, purchased under Creative Commons from shutter stock. https://thumb1.shutterstock.com/display_pic_with_logo/1835936/241110436/stock-vector-seamless-cartoon-cave-landscape-unending-background-with-layers-for-parallax-effect-241110436.jpg

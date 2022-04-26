@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <meta name="viewport" content = "width = device-width, initial-scale = 1.0, user-scalable = no"/>
+  <script type="text/javascript" src="libs/jquery-2.1.3.min.js"></script>
+  <script type="text/javascript" src="libs/introtoapps-20170428.min.js"></script>
+
+
+  <script type="text/javascript">
+    // Declare global variables
+
+    var jumpSound;
+    var bgMusic;
+    var currentjump;
+    var secondcounter;
+    var coalNumber;
+    var generateCoal;
+    var score;
+    var speed;
+    var currentlevel;
+
+    $(document).ready(function() {
+
+
+      console.log("Width: " + $(window).width());
+      console.log("Height: " + $(window).height());
+
+      //reload game on resize
+      $(window).resize(function(){location.reload();});
+
+      if ($(window).width() < $(window).height()) {
+          console.log("Portrait mode");
+      } else {
+          console.log("Landscape mode");
+      }
+
+      //hides the pause menu and question menu
+      $("#pauseDisplay").hide();
+      $("#questionDisplay").hide();
+
+      // define variables
+      jumpSound = document.getElementById("jumpingSound");
+      bgMusic = document.getElementById("backgroundMusic");
+      currentjump = false;
+      score = 0;
+      speed = 0.7;
+      gamePaused = false;
+
+      //this is so i can type in a value between 1-100 x width/height for
+      //position or rezing elements to scale throughout the app
+      var width = ($(window).width() / 100);
+      var height = ($(window).height() / 100);
+      var scale = 0.1 * width;
+
+      console.log(10 * width);
+      console.log(130 * width);
+
+      //set scale and move minecart to starting position
+      $("#minecart").moveTo(10 * width, 80 * height);
+      $("#minecart").css({ "transform": "scale("+scale+")" });
+      $(".coal1").css({ "transform": "scale("+scale+")" });
+      $(".coal2").css({ "transform": "scale("+scale+")" });
+      $(".ledge").css({ "transform": "scale("+scale+")" });
+
+      //variables for working out math questions
+      var number1 = random(1,30);
+      var number2 = random(1,30);
+      var chooseAnswer = random(1,2);
+      var correctAnswer = number1 + number2;
+      var plusorMinus = Math.random() < 0.5 ? -1 : 1;
+      var wrongAnswer = (number1 + number2) + (plusorMinus * random(1,4));
+      var answer1;
+      var answer2;
+
+      //this shows the display of questions and has a countdown of 20 seconds.
+
+      function questions() {
+
+        answeredWrong = 0;
+        answeredRight = 0;
+        //20 second timer, print questions
+        var secondcounter = 20;
+        var interval = setInterval(function () {
+              secondcounter--;
+              if (secondcounter >= 0) {
+                    $("#page1").append('\
+                    <div id="questionDisplay"> <h1>'+ secondcounter +'</h1>\
+                    <p> ' + number1 + ' + ' + number2 + ' = ____ </p>\
+                    <button id="qbutton1"> '+ answer1 +' </button>\
+                    <button id="qbutton2"> '+ answer2 +' </button>\
+                    </div>');
+              }
+              if (secondcounter == 0) {
+                  clearInterval(secondcounter);
+                  $("#page1").append('\
+                  <div id="questionDisplay"> <p></p> <p></p> <h1> GAME OVER </h1>\
+                  </div>');
+                  location.reload();
+
+              }
+        }, 1000);
+      };
+
+      bgMusic.play();
+
+
+      $('#background').data("stop", false);
+
+      //creates a function to animate scrolling background and create a boolean
+      //flag to turn off animation when pausing
+      (function bgScroll() {
+          if (!$("#background").data("stop")) {
+            $('#background').css('left', 0);
+            $('#background').css('top', 0);
+            $('#background').animate({backgroundPosition: '-=10'}, 20, bgScroll);
+          };
+      })();
+
+      //code for pause buttons, stops all animations and sets a flag to then unpause
+      $("#pauseButton").onTap(function() {
+          if (gamePaused == false) {
+          gamePaused = true;
+          pause(true);
+          $('#background').data("stop", true).stop();
+          bgMusic.volume = 0.2;
+          jumpSound.volume = 0;
+          $("#pauseDisplay").show();
+          $("#questionDisplay").hide();
+
+        } else {
+                  pause(false);
+                  gamePaused = false;
+                  $('#background').data("stop", false);
+                  bgMusic.volume = 1;
+                }
+        });
+
+
+      var musicOff = false;
+      //mute button
+      $("#muteButton").onTap(function() {
+          if (musicOff == false) {
+            musicOff = true;
+            bgMusic.volume = 1;
+            jumpSound.volume = 1;
+
+          } else {
+              musicOff = false;
+              bgMusic.volume = 0;
+              jumpSound.volume = 0;
+            }
+      });
+
+      //reloads the browser on quit, to go back to main menu.
+      $("#quitButton").onTap(function() {
+        location.reload();
+      });
+
+      // Bind the onCollision Events to the minecart
+      $('#minecart').onCollision(function(otherObject){
+        // This turns gravity off when he jumps and hits the floor
+        //to stop him falling off screen, for some reason he bounces back up though so i
+        // reset his position.
+        if(otherObject.is('#floor')){
+          this.weight(0);
+          this.moveTo(this.position().left,this.position().top);
+          currentjump = false;
+        }
+
+        if(otherObject.is('#ledge')){
+          // console.log("Colision with the ledge");
+          this.weight(0);
+          this.moveTo(this.position().left,this.position().top);
+          currentjump = false;
+        }
+
+        // Increases the score by 100 points from each coal collected and removes them
+        if (otherObject.is('.coal, .coal2')) {
+          // console.log("Colision with coal");
+          otherObject.remove()
+          score += 100;
+          // console.log("Score = " + score);
+          $("#scoreDisplay").html("SCORE: " + score);
+        }
+
+        //pauses game if hit tnt and displays math questions
+        if (otherObject.is('.tnt')) {
+          pause(true);
+          gamePaused = true;
+          $('#background').data("stop", true).stop();
+          $("#questionDisplay").show();
+          questions();
+        }
+
+      });
+
+      // Bind to tap event
+      $(document).onTap(function() {
+          // console.log("You tapped the screen");
+          // Check to see if the player is allowed to jump
+          // this checks the variable and if it is still on the floor
+          if(!currentjump && !$("#minecart").isCollision('.floor')){
+            jumpSound.play();
+            // Move it up and turn gravity back on
+            $("#minecart").moveTo(10 * width, 1);
+            $("#minecart").weight(0.6);
+            // is currently jumping
+            currentjump = true;
+          }
+      });
+
+      //Creates a timer that spawns a random number of coal between 1 and 10,
+      //at a random interval between 2-6 seconds
+
+      setInterval(function(){
+        generateCoal = random(1,10);
+        var i;
+        var coalortnt = random(1,2) //random number to decide between coal or tnt spawning
+        // console.log("Coal to be generated = " + generateCoal);
+
+        if (gamePaused == false) {
+
+          if (coalortnt == 1) {
+
+              for (i = 0; i < generateCoal; i++) {
+                $("#page1").append("<div class='coal' style='right: " + i * 5 + "%'></div>");
+                $(".coal").speed(speed);
+                $(".coal").moveTo(270);
+              }
+          }
+
+          if (coalortnt == 2) {
+              $("#page1").append("<div class='tnt' style='right: 0px'></div>");
+              $(".tnt").speed(speed);
+              $(".tnt").moveTo(270);
+          }
+
+        }
+
+      }, random(2000,4000));
+
+
+      setInterval(function(){
+          // console.log("Generate Ledge");
+
+        if (gamePaused == false) {
+            if ($("#ledge").length == 0) {
+                  //generates a ledge every 7-10 seconds
+                  $("#page1").append("<div id='ledge' style='right: 0px'></div>");
+                  $("#ledge").speed(speed);
+                  $("#ledge").moveTo(270);
+                  generateCoal = random(1,5)
+                  var i;
+                    //generates another layer of coal when the ledge appears, between 1-5
+
+                  for (i = 0; i < generateCoal; i++) {
+                      $("#page1").append("<div class='coal2' style='right: " + i * 50 + "px'></div>");
+                      $(".coal2").speed(speed);
+                      $(".coal2").moveTo(270);
+                  }
+            }
+        }
+      }, random(7000,10000));
+
+
+    });
+
+  </script>
+
+    <title>Page Title</title>
+    <style type="text/css">
+      /*red text for timer*/
+      h1 {
+        color: red;
+        margin-top: 2vh;
+        padding-top: 0;
+      }
+
+      #page1 {
+          height: 100vh;
+          width: 100vw;
+          overflow: hidden;
+          z-index:0;
+          position: fixed;
+          top: 0px;
+          left: 0px;
+          position: fixed;
+      }
+
+      #pauseButton {
+          position: fixed;
+          left: 2vw;
+          top: 2vh;
+          height: 6vh;
+          width: 5vw;
+          padding: 1vw;
+          border-radius: 15px;
+          background-color: #563232;
+          color: white;
+          box-shadow: 0px 0px 6px black;
+          z-index: 15;
+          text-align: center;
+          font-size: 3.5vw;
+      }
+
+
+      #muteButton {
+          background-image: url('assets/music.png');
+          position: fixed;
+          background-repeat: no-repeat;
+          padding-top: 10vh;
+          padding: 1vw;
+          background-size: 7vw 8vh;
+          left: 10vw;
+          top: 2vh;
+          height: 6vh;
+          width: 5vw;
+          border-radius: 15px;
+          background-color: #563232;
+          box-shadow: 0px 0px 6px black;
+          z-index: 15;
+          font-size: 3.5vw;
+      }
+
+      #questionDisplay {
+        display: table-cell;
+        position: fixed;
+        top: 20vh;
+        left: 12.5vw;
+        width: 75vw;
+        height: 50vh;
+        border: 2px solid black;
+        border-radius: 20px;
+        background-color: #633838;
+        z-index: 11;
+        text-align: center;
+        background-color: #633838;
+        font-size: 3vw;
+        text-align: center;
+        font-family: sans-serif;
+        font: impact;
+        color: white;
+        text-shadow: 2px 2px 5px black;
+      }
+
+      #qbutton1 {
+        display: inline-block;
+        padding: 2vw 1vh;
+        margin-right: 1vw;
+        margin-top: 1vh;
+        font-size: 2vw;
+        width: 25vw;
+        text-align: center;
+        outline: none;
+        color: #fff;
+        background-color: #563232;
+        border: 2px solid black;
+        border-radius: 10px;
+        text-shadow: 2px 2px 5px black;
+      }
+
+      #qbutton1:hover {background-color: #653b3b}
+
+      #qbutton1:active {
+        background-color: #653b3b;
+      }
+
+      #qbutton2 {
+        display: inline-block;
+        margin-left: 1vw;
+        margin-top: 1vh;
+        padding: 2vw 1vh;
+        font-size: 2vw;
+        width: 25vw;
+        text-align: center;
+        outline: none;
+        color: #fff;
+        background-color: #563232;
+        border: 2px solid black;
+        border-radius: 10px;
+        text-shadow: 2px 2px 5px black;
+      }
+
+      #qbutton2:hover {background-color: #653b3b}
+
+      #qbutton2:active {
+        background-color: #653b3b;
+      }
+
+      #background {
+        background-image: url('assets/underground.png');
+        background-repeat: repeat-x;
+        background-size: 100vw 100vh;
+        height: 100%;
+        width: 5000px;
+        position: fixed;
+        z-index: 0;
+      }
+
+      #minecart {
+        background-image: url('assets/minecart.png');
+        position: fixed;
+        background-size: 115px 134px;
+        width: 115px;
+        height: 134px;
+        z-index: 10;
+      }
+
+
+      #floor {
+        position: fixed;
+        left: 0vw;
+        top: 84vh;
+        width: 100vw;
+        height: 10vh;
+        z-index: 10;
+      }
+
+      #ledge {
+        background-image: url('assets/ledge.png');
+        position: fixed;
+        background-repeat: no-repeat;
+        top: 50vh;
+        width: 300px;
+        height: 60px;
+        border-radius: 20px;
+        z-index: 10;
+      }
+
+      .coal {
+        background-image: url('assets/coal.png');
+        background-size: 25px 25px;
+        width: 25px;
+        height: 25px;
+        top: 70vh;
+        z-index: 10;
+        position: fixed;
+      }
+
+      .coal2 {
+        background-image: url('assets/coal.png');
+        background-size: 25px 25px;
+        width: 25px;
+        height: 25px;
+        top: 30vh;
+        z-index: 10;
+        position: fixed;
+      }
+
+      .tnt {
+        background-image: url('assets/tnt.png');
+        background-size: 100px 141px;
+        width: 100px;
+        height: 141px;
+        top: 65vh;
+        z-index: 10;
+        position: fixed;
+        transform: scale(0.5);
+      }
+
+      #scoreDisplay {
+        position: fixed;
+        top: 2vh;
+        right: 2vw;
+        width: 200px;
+        height: 25px;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-size: 30px;
+        font-family: sans-serif;
+        font-variant: small-caps;
+        text-align: center;
+        color: black;
+        font-style: bold;
+        -webkit-text-stroke-width: 2px;
+        -webkit-text-stroke-color: white;
+        z-index: 5;
+      }
+
+      #pauseDisplay {
+        position: fixed;
+        top: 16vh;
+        left: 30vw;
+        width: 40vw;
+        height: 65vh;
+        border: 2px solid black;
+        border-radius: 20px;
+        background-color: #633838;
+        z-index: 11;
+        font-size: 4vw;
+        text-align: center;
+        font-family: sans-serif;
+        font: impact;
+        color: white;
+        text-shadow: 2px 2px 5px black;
+      }
+
+      #restartButton {
+        display: inline-block;
+        padding: 2vw 1vh;
+        font-size: 2vw;
+        width: 25vw;
+        text-align: center;
+        outline: none;
+        color: #fff;
+        background-color: #563232;
+        border: 2px solid black;
+        border-radius: 10px;
+        text-shadow: 2px 2px 5px black;
+      }
+
+      #restartButton:hover {background-color: #653b3b}
+
+      #restartButton:active {
+        background-color: #653b3b;
+      }
+
+      #quitButton {
+        display: inline-block;
+        margin: 2vw;
+        margin-top: 4vh;
+        padding: 2vw 1vh;
+        font-size: 2vw;
+        width: 25vw;
+        text-align: center;
+        outline: none;
+        color: #fff;
+        background-color: #563232;
+        border: 2px solid black;
+        border-radius: 10px;
+        text-shadow: 2px 2px 5px black;
+      }
+
+      #quitButton:hover {background-color: #653b3b}
+
+      #quitbutton:active {
+        background-color: #653b3b;
+      }
+
+    </style>
+</head>
+
+<body>
+
+  <div id="page1">
+        <div id="pauseButton"> || </div>
+        <div id="muteButton"></div>
+        <div id="background"></div>
+        <!-- <div id="ledgecheck"></div> -->
+        <div id="floor"> <p> Sean Slack - SID 217345222 </p> </div>
+        <div id="minecart"></div>
+        <div id="scoreDisplay"> SCORE: 000 </div>
+
+        <div id="pauseDisplay"> <br /> PAUSED <br /><br />
+          <button id="restartButton"> RESTART </button>
+          <button id="quitButton"> QUIT </button>
+        </div>
+
+        <audio id="jumpingSound">
+            <source src="assets/181602__coby12388__enerjump.wav" type="audio/wav">
+        </audio>
+
+        <audio loop id="backgroundMusic">
+          <source src="assets/boboshin_-_Funk_Tele_Am7_110_bpm.mp3" type="audio/mp3">
+        </audio>
+  </div>
+</body>
+
+</html>
